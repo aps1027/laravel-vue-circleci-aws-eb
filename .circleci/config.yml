@@ -12,16 +12,23 @@ jobs:
         command: [--default-authentication-plugin=mysql_native_password]
         environment:
           MYSQL_ROOT_PASSWORD: rootPass
-          MYSQL_USER: user # need to be same with "DB_USERNAME" of .env.testing
-          MYSQL_PASSWORD: password # need to be same with "DB_PASSWORD" of .env.testing
-          MYSQL_DATABASE: test_laravel # need to be same with "DB_DATABASE" of .env.testing
-      - image: rnwood/smtp4dev:linux-amd64-v3
+          MYSQL_USER: user # need to be same with "DB_USERNAME" of .env
+          MYSQL_PASSWORD: password # need to be same with "DB_PASSWORD" of .env
+          MYSQL_DATABASE: test_laravel # need to be same with "DB_DATABASE" of .env
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # Using the RAM variation mitigates I/O contention
+      # for database intensive operations.
+      # - image: circleci/mysql:5.7-ram
+      #
+      # - image: redis:2.8.19
 
-    working_directory: ~/laravel/laravel
+    working_directory: ~/laravel-vue-circleci-aws-eb/laravel
 
     steps:
       - checkout:
-          path: ~/laravel
+          path: ~/laravel-vue-circleci-aws-eb
       - run: sudo apt-get update -y
       - run: sudo apt-get install -y libpng-dev libjpeg-dev zip unzip git
       - run: sudo rm -rf /var/lib/apt/lists/*
@@ -29,7 +36,7 @@ jobs:
       - run: sudo docker-php-ext-configure gd --with-jpeg-dir=/usr/lib/x86_64-linux-gnu/
       - run: sudo docker-php-ext-install pdo pdo_mysql gd mbstring zip
       - run: sudo composer self-update
-
+      
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -51,15 +58,13 @@ jobs:
       - run:
           name: "Create Environment file and generate app key"
           command: |
-            mv .env.circleci .env.testing
-            php artisan key:generate --env=testing
-            php artisan config:clear
-            php artisan cache:clear
+            mv .env.testing .env
+            php artisan key:generate
 
       - run:
           name: "Create database and run migration"
           command: |
-            php artisan migrate:refresh --seed --env=testing
+            php artisan migrate
 
       # run tests with phpunit
       - run:
