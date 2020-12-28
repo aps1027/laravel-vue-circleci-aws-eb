@@ -53,22 +53,23 @@
 1. create application with name `laravel-vue-circleci` and `LaravelVueCircleci-env`
 1. select `docker` environment and select `64bit amazon linux`
 1. set `mysql` database in the folowing:
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_1.png?raw=true)
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_2.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_1.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_2.png?raw=true)
 1. after creation env:
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_4.png?raw=true)
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_3.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_4.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_3.png?raw=true)
 1. add environment variables:
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_8.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_8.png?raw=true)
 ### CircleCI
 1. set up project `laravel-vue-circleci-aws-eb`
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_5.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_5.png?raw=true)
 1. select `existed config file`
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_6.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_6.png?raw=true)
 1. set `AWS_Environment_Variables`
-    ![alt text](https://github.com/aps1027/k8s-jenkins-ci-cd/blob/develop/doc/images/eb_7.png?raw=true)
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_7.png?raw=true)
 1. do code changes, commit and push
 1. after, `test-build-deploy` will be `success`
+    ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_9.png?raw=true)
 
 ### Check your code change apply or not by accessing `<elastic beanstalk url>`.
     
