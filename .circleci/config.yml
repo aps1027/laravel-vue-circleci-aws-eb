@@ -86,7 +86,7 @@ jobs:
           DOCKER_IMAGE: php-fpm
           APP: laravel-vue
           AWS_REGION: ap-southeast-1
-    working_directory: ~/tjm
+    working_directory: ~/laravel-vue-circleci-aws-eb
     steps:
       - checkout
       - setup_remote_docker:
