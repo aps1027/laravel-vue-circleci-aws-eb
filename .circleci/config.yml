@@ -1,0 +1,160 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  test:
+    docker:
+      # Specify the version you desire here
+      - image: circleci/php:7.3-fpm
+      - image: circleci/mysql:latest
+        command: [--default-authentication-plugin=mysql_native_password]
+        environment:
+          MYSQL_ROOT_PASSWORD: rootPass
+          MYSQL_USER: user # need to be same with "DB_USERNAME" of .env.testing
+          MYSQL_PASSWORD: password # need to be same with "DB_PASSWORD" of .env.testing
+          MYSQL_DATABASE: test_laravel # need to be same with "DB_DATABASE" of .env.testing
+      - image: rnwood/smtp4dev:linux-amd64-v3
+
+    working_directory: ~/laravel/laravel
+
+    steps:
+      - checkout:
+          path: ~/laravel
+      - run: sudo apt-get update -y
+      - run: sudo apt-get install -y libpng-dev libjpeg-dev zip unzip git
+      - run: sudo rm -rf /var/lib/apt/lists/*
+      - run: sudo docker-php-ext-install zip
+      - run: sudo docker-php-ext-configure gd --with-jpeg-dir=/usr/lib/x86_64-linux-gnu/
+      - run: sudo docker-php-ext-install pdo pdo_mysql gd mbstring zip
+      - run: sudo composer self-update
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            # "composer.lock" can be used if it is committed to the repo
+            - v1-dependencies-{{ checksum "composer.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run:
+          name: "Install Dependencies"
+          command: composer install -n --prefer-dist
+
+      - save_cache:
+          key: v1-dependencies-{{ checksum "composer.json" }}
+          paths:
+            - ./vendor
+
+      # prepare the database
+      - run:
+          name: "Create Environment file and generate app key"
+          command: |
+            mv .env.circleci .env.testing
+            php artisan key:generate --env=testing
+            php artisan config:clear
+            php artisan cache:clear
+
+      - run:
+          name: "Create database and run migration"
+          command: |
+            php artisan migrate:refresh --seed --env=testing
+
+      # run tests with phpunit
+      - run:
+          name: "Run Tests"
+          command: phpdbg -qrr vendor/bin/phpunit --coverage-html build/coverage-report
+
+      # reset DataBase
+      - run:
+          name: "Reset Database to initial state"
+          command: php artisan migrate:reset --env=testing
+
+      - store_artifacts:
+          path: build/coverage-report
+
+  build_and_push:
+    docker:
+      - image: docker:18.06.1-ce-git
+        environment:
+          DOCKER_IMAGE: php-fpm
+          APP: laravel-vue
+          AWS_REGION: ap-southeast-1
+    working_directory: ~/tjm
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 18.06.0-ce
+          # docker_layer_caching: true
+      - run:
+          name: Install requirements
+          command: |
+            apk add --no-cache py-pip bash
+            pip install awscli
+      - run:
+          name: docker build
+          command: |
+            docker build -t $DOCKER_IMAGE --no-cache laravel/.
+      - run:
+          name: push builds
+          shell: /bin/bash
+          command: |
+            set -e
+            eval $(aws --region $AWS_REGION ecr get-login --no-include-email)
+            export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --output text | awk '{print $1}')
+            export SHA1=$(echo ${CIRCLE_SHA1} | cut -c1-7)
+            docker images
+            docker tag $DOCKER_IMAGE:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP:$SHA1
+            docker tag $DOCKER_IMAGE:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP:$CIRCLE_BRANCH
+            time docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP:$SHA1
+            time docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$APP:$CIRCLE_BRANCH
+
+  deploy:
+    docker:
+      - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run:
+          name: Install deploy tools
+          command: |
+            sudo pip install awsebcli==3.14.6
+            wget http://bit.ly/eb_deploy_and_notify_sh -O ~/eb_deploy_and_notify.sh
+            chmod +x ~/eb_deploy_and_notify.sh
+      - run:
+          name: Deploy!
+          shell: /bin/bash
+          command: |
+            set -e
+            eb --version
+            export EB_ENV=`eb list | grep '*' | awk '{print $2}'`
+            export SHA1=$(echo ${CIRCLE_SHA1} | cut -c1-7)
+            echo "${CIRCLE_BRANCH}" ; echo "${EB_ENV}" ; echo  "${SHA1}"
+            cd laravel
+            sed -i -e "s/changeme/$SHA1/" Dockerrun.aws.json
+            git add Dockerrun.aws.json
+            git rm Dockerfile
+            ~/eb_deploy_and_notify.sh ${EB_ENV} --staged
+          no_output_timeout: 15m
+
+workflows:
+  version: 2
+  test-build-deploy:
+    jobs:
+      - test
+      - build_and_push:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - develop
+                - master
+      - deploy:
+          requires:
+            - build_and_push
+          filters:
+            branches:
+              only:
+                - develop
+                - master
