@@ -52,7 +52,7 @@
 ### Elastic Beanstalk
 1. create application with name `laravel-vue-circleci` and `LaravelVueCircleci-env`
 1. select `docker` environment and select `64bit amazon linux`
-1. set `mysql` database in the folowing:
+1. set `mysql` database in the following:
     ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_1.png?raw=true)
     ![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/eb_2.png?raw=true)
 1. after creation env:
