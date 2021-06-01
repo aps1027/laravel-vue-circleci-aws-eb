@@ -1,4 +1,17 @@
 # Laravel Vue Circleci AWS Elastic Beanstalk
+![alt text](https://github.com/aps1027/laravel-vue-circleci-aws-eb/blob/develop/doc/images/life_cycle.PNG?raw=true)
+
+## Life Cycle
+1. Do code changes
+1. Commit and push code changes to GitHub
+1. trigger code changes automatically via CircleCI and start testing (like UT and FT)
+1. Start deployment on AWS after testing success
+
+## Tools
+1. Docker for Containerization
+1. GitHub for Source Vesion Control
+1. CircleCI for CI/CD tool
+1. AWS services (Elastic Beanstalk)
 
 ## Prerequisites
 1. install `docker`
