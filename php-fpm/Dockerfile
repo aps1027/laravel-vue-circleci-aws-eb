@@ -36,6 +36,6 @@ FROM base AS dev
 
 ## add development packages.
 RUN apk add autoconf gcc g++ make \
-    && pecl install xdebug \
+    && pecl install xdebug-2.9.8 \
     && docker-php-ext-enable xdebug \
     && apk add nodejs npm yarn
